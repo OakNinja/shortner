@@ -141,9 +141,17 @@ def go(request, short):
 class EntryTable(Table):
     class Meta:
         auto__model = Entry
-        columns__short = dict(
-            cell__url=lambda value, **_: f'/s/{value}',
-        )
+
+        @staticmethod
+        def columns__short__cell__format(table, row, **_):
+            url = row.get_short_url(table.get_request())
+
+            return mark_safe(
+                f'<span style="white-space:nowrap;">'
+                f'<a class="fa fa-lg fa-copy" href="#" onclick="copyToClipBoard(\'{url}\')"></a> '
+                f'<a href="{url}">{url}</a>'
+                f'</span>'
+            )
         columns__url__cell__url = (lambda value, **_: value)
 
         @staticmethod
@@ -185,6 +193,7 @@ class EntryApproveTable(EntryTable):
 
     class Meta:
         title = 'Approvable entries'
+        bulk__title = None
 
         @staticmethod
         def rows(table, **_):
@@ -209,6 +218,7 @@ class EntryUnapproveTable(EntryTable):
 
     class Meta:
         title = 'Approved entries'
+        bulk__title = None
 
         @staticmethod
         def rows(table, **_):
@@ -233,6 +243,18 @@ def entries(request):
             admin_table=EntryAdminTable(),
             approve_table=EntryApproveTable(),
             unapprove_table=EntryUnapproveTable(),
+            helper_script=html.script(
+                mark_safe('''
+                    function copyToClipBoard(url) {
+                        const temp = document.createElement('textarea');
+                        temp.value = url;
+                        document.body.appendChild(temp);
+                        temp.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(temp);
+                    }
+                ''')
+            ),
         )
     )
 

@@ -19,6 +19,9 @@ class Entry(models.Model):
     def get_absolute_url(self):
         return f'/entries/{self.short}/'
 
+    def get_short_url(self, request):
+        return request.build_absolute_uri(f'/s/{self.short}')
+
     def is_valid(self):
         return (
             self.valid_to > timezone.now()
